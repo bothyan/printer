@@ -1,12 +1,19 @@
 <template>
   <div class="app-container calendar-list-container">
     <div class="filter-container">
-      <el-input @keyup.enter.native="handleFilter" style="width: 150px;" class="filter-item" :placeholder="$t('table.name')" v-model="listQuery.name">
+      <el-input @keyup.enter.native="handleFilter" style="width: 150px;" class="filter-item" :placeholder="$t('table.printId')" v-model="listQuery.printId">
       </el-input>
-      <el-input @keyup.enter.native="handleFilter" style="width: 150px;" class="filter-item" :placeholder="$t('table.email')" v-model="listQuery.email">
+      <el-input @keyup.enter.native="handleFilter" style="width: 150px;" class="filter-item" :placeholder="$t('table.agency')" v-model="listQuery.agency">
       </el-input>
-      <el-input @keyup.enter.native="handleFilter" style="width: 150px;" class="filter-item" :placeholder="$t('table.phone')" v-model="listQuery.phone">
+      <el-input @keyup.enter.native="handleFilter" style="width: 150px;" class="filter-item" :placeholder="$t('table.taskId')" v-model="listQuery.taskId">
       </el-input>
+      <el-select clearable class="filter-item" style="width: 200px" v-model="listQuery.status" :placeholder="$t('table.status')">
+        <el-option v-for="item in  calendarTypeOptions" :key="item.key" :label="item.display_name+'('+item.key+')'" :value="item.key">
+        </el-option>
+      </el-select>
+      
+
+
       <el-button class="filter-item" type="primary" v-waves icon="el-icon-search" @click="handleFilter">{{$t('table.search')}}</el-button>
       <el-button class="filter-item" style="margin-left: 10px;" @click="handleCreate" type="primary" icon="el-icon-edit">{{$t('table.add')}}</el-button>
       <el-button class="filter-item" type="primary" :loading="downloadLoading" v-waves icon="el-icon-download" @click="handleDownload">{{$t('table.export')}}</el-button>
@@ -14,29 +21,35 @@
 
     <el-table :key='tableKey' :data="list" v-loading="listLoading" element-loading-text="给我一点时间" border fit highlight-current-row
       style="width: 100%">
-      <el-table-column align="center" :label="$t('table.id')" width="65">
+      <el-table-column align="center" :label="$t('table.printId')" width="65">
         <template slot-scope="scope">
-          <span>{{scope.row.id}}</span>
+          <span>{{scope.row.printId}}</span>
         </template>
       </el-table-column>
-      <el-table-column width="150px" align="center" :label="$t('table.date')">
+      <el-table-column width="100px" align="center" :label="$t('table.date')">
         <template slot-scope="scope">
           <span>{{scope.row.timestamp | parseTime('{y}-{m}-{d} {h}:{i}')}}</span>
         </template>
       </el-table-column>
-      <el-table-column min-width="150px" align="center" :label="$t('table.name')">
+      <el-table-column min-width="80px" align="center" :label="$t('table.printkey')">
         <template slot-scope="scope">
-          <span class="link-type" @click="handleUpdate(scope.row)">{{scope.row.name}}</span>
+          <span class="link-type" @click="handleUpdate(scope.row)">{{scope.row.printkey}}</span>
+          <el-tag>{{scope.row.status | typeFilter}}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column min-width="150px" align="center" :label="$t('table.email')">
+      <el-table-column min-width="80px" align="center" :label="$t('table.taskId')">
         <template slot-scope="scope">
-          <span>{{scope.row.email}}</span>
+          <span>{{scope.row.taskId}}</span>
         </template>
       </el-table-column>
-      <el-table-column min-width="150px" align="center" :label="$t('table.phone')">
+      <el-table-column min-width="80px" align="center" :label="$t('table.agency')">
         <template slot-scope="scope">
-          <span>{{scope.row.phone}}</span>
+          <span>{{scope.row.agency}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column min-width="80px" align="center" :label="$t('table.printData')">
+        <template slot-scope="scope">
+          <span>{{scope.row.printData}}</span>
         </template>
       </el-table-column>
       <el-table-column min-width="150px" align="center" :label="$t('table.logmsg')">
@@ -70,14 +83,11 @@
           <el-date-picker v-model="temp.timestamp" type="datetime" placeholder="Please pick a date">
           </el-date-picker>
         </el-form-item>
-        <el-form-item :label="$t('table.name')" prop="name">
-          <el-input v-model="temp.name"></el-input>
+        <el-form-item :label="$t('table.agency')" prop="agency">
+          <el-input v-model="temp.agency"></el-input>
         </el-form-item>
-        <el-form-item :label="$t('table.phone')" prop="phone">
-          <el-input v-model="temp.phone"></el-input>
-        </el-form-item>
-        <el-form-item :label="$t('table.email')" prop="email">
-          <el-input v-model="temp.email"></el-input>
+        <el-form-item :label="$t('table.status')" prop="status">
+          <el-input v-model="temp.status"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -90,10 +100,20 @@
 </template>
 
 <script>
-import { merchantList , createMerchant, updateMerchant } from '@/api/merchant'
+import { printerList , createPrinter, updatePrinter } from '@/api/printer'
 import waves from '@/directive/waves' // 水波纹指令
 import { parseTime } from '@/utils'
+const calendarTypeOptions = [
+  { key: 'status1', display_name: '状态1' },
+  { key: 'status2', display_name: '状态2' },
+  { key: 'status3', display_name: '状态3' }
+]
 
+// arr to obj ,such as { CN : "China", US : "USA" }
+const calendarTypeKeyValue = calendarTypeOptions.reduce((acc, cur) => {
+  acc[cur.key] = cur.display_name
+  return acc
+}, {})
 
 export default {
   name: 'user',
@@ -109,23 +129,23 @@ export default {
       listQuery: {
         page: 1,
         limit: 20,
-        name: undefined,
-        phone: undefined,
-        email: undefined,
-        sort: undefined
+        printkey: undefined,
+        taskId: undefined,
+        printId: undefined,
+        agency: undefined
       },
       temp: {
         id: undefined,
         timestamp: new Date(),
-        name: '',
-        phone: '',
-        email: '',
+        agency: '',
+        status: ''
       },
       rules: {
         timestamp: [{ type: 'date', required: true, message: 'timestamp is required', trigger: 'change' }],
-        name: [{ required: true, message: 'name is required', trigger: 'blur' }],
-        phone: [{ required: true, message: 'phone is required', trigger: 'blur' }]
+        agency: [{ required: true, message: 'agency is required', trigger: 'blur' }],
+        status: [{ required: true, message: 'status is required', trigger: 'blur' }]
       },
+      calendarTypeOptions,
       downloadLoading: false,
       dialogStatus: '',
       textMap: {
@@ -135,14 +155,19 @@ export default {
       dialogFormVisible: false
     }
   },
+  filters: {
+    typeFilter(type) {
+      return calendarTypeKeyValue[type]
+    }
+  },
   created() {
     this.getList()
   },
   methods: {
     getList() {
       this.listLoading = true
-      merchantList(this.listQuery).then(response => {
-        //console.log(response)
+      printerList(this.listQuery).then(response => {
+        console.log(response)
         this.list = response.data.items
         this.total = response.data.total
         this.listLoading = false
@@ -197,7 +222,7 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           this.temp.id = parseInt(Math.random() * 100) + 1024 // mock a id
-          createMerchant(this.temp).then(() => {
+          createPrinter(this.temp).then(() => {
             this.list.unshift(this.temp)
             this.dialogFormVisible = false
             this.$notify({
@@ -215,7 +240,7 @@ export default {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
           tempData.timestamp = +new Date(tempData.timestamp) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
-          updateMerchant(tempData).then(() => {
+          updatePrinter(tempData).then(() => {
             for (const v of this.list) {
               if (v.id === this.temp.id) {
                 const index = this.list.indexOf(v)
@@ -237,8 +262,8 @@ export default {
     handleDownload() {
       this.downloadLoading = true
       import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['timestamp', 'name', 'email', 'phone', 'type']
-        const filterVal = ['timestamp', 'name', 'email', 'phone', 'type']
+        const tHeader = ['printId', 'printkey', 'taskId', 'agency', 'printData','status','timestamp','logmsg','othermsg']
+        const filterVal = ['printId', 'printkey', 'taskId', 'agency', 'printData','status','timestamp','logmsg','othermsg']
         const data = this.formatJson(filterVal, this.list)
         excel.export_json_to_excel({
           header: tHeader,

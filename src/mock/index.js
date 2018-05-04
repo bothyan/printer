@@ -1,9 +1,9 @@
 import Mock from 'mockjs'
 import loginAPI from './login'
-import articleAPI from './article'
 import systemAPI from './system'
 import merchantAPI from './merchant'
 import printerAPI from './printer'
+import logAPI from './logs'
 import remoteSearchAPI from './remoteSearch'
 
 // Mock.setup({
@@ -41,12 +41,12 @@ Mock.mock(/\/printer\/list/, 'get', printerAPI.getPrinterList)
 Mock.mock(/\/printer\/create/, 'post', printerAPI.createPrinter)
 Mock.mock(/\/printer\/update/, 'post', printerAPI.updatePrinter)
 
-// 文章相关
-Mock.mock(/\/article\/list/, 'get', articleAPI.getList)
-Mock.mock(/\/article\/detail/, 'get', articleAPI.getArticle)
-Mock.mock(/\/article\/pv/, 'get', articleAPI.getPv)
-Mock.mock(/\/article\/create/, 'post', articleAPI.createArticle)
-Mock.mock(/\/article\/update/, 'post', articleAPI.updateArticle)
+//日志相关
+Mock.mock(/\/logInLog\/list/, 'get', logAPI.getLogInLogList)
+Mock.mock(/\/operateLog\/list/, 'get', logAPI.getOperateLogList)
+Mock.mock(/\/printLog\/list/, 'get', logAPI.getPrintLogList)
+Mock.mock(/\/produceLog\/list/, 'get', logAPI.getProduceLogList)
+
 
 // 搜索相关
 Mock.mock(/\/search\/user/, 'get', remoteSearchAPI.searchUser)

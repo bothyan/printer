@@ -1,31 +1,31 @@
 import Mock from 'mockjs'
 import { param2Obj } from '@/utils'
 
-const merchantList = []
+const printerList = []
 const count = 100
 
 for (let i = 0; i < count; i++) {
-  merchantList.push(Mock.mock({
-    id: '@increment',
+  printerList.push(Mock.mock({
+    printId: '@increment',
+    printkey: '@string',
+    taskId: '@integer',
+    agency: '@first',
+    printData: '打印数据',
+    'status|1': ['status1','status2','status3'],
     timestamp: +Mock.Random.date('T'),
-    name: '@name',
-    email: '@email',
-    phone: '@integer(10000000000, 99999999999)',
     logmsg: '@title(5, 10)',
     othermsg: "额外信息"
   }))
 }
-
-
 export default {
   getPrinterList: config => {
-    const { name, email, type, phone, page = 1, limit = 20 } = param2Obj(config.url)
+    const {agency, printkey, taskId, printId, page = 1, limit = 20 } = param2Obj(config.url)
 
-    let mockList = merchantList.filter(item => {
-      if (type && item.type !== type) return false
-      if (name && item.name.indexOf(name) < 0) return false
-      if (phone && item.phone.indexOf(phone) < 0) return false
-      if (email && item.email.indexOf(email) < 0) return false
+    let mockList = printerList.filter(item => {
+      if (agency && item.agency.indexOf(agency) < 0) return false
+      if (printkey && item.printkey.indexOf(printkey) < 0) return false
+      if (taskId && item.taskId.indexOf(taskId) < 0) return false
+      if (printId && item.printId.indexOf(printId) < 0) return false
       return true
     })
 
